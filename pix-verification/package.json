@@ -1,0 +1,19 @@
+{
+  "name": "lunium-pix-verification",
+  "version": "1.0.0",
+  "description": "Prove a PIX payment settled, with no API key — Banco Central E2E verification against the open Lunium endpoint.",
+  "type": "module",
+  "main": "verify.mjs",
+  "exports": "./verify.mjs",
+  "scripts": {
+    "start": "node demo.mjs",
+    "demo": "node demo.mjs",
+    "test": "node test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["pix", "banco-central", "e2e", "payment-verification", "brazil", "lunium"],
+  "license": "MIT",
+  "dependencies": {}
+}

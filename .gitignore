@@ -1,0 +1,11 @@
+# Chave de sandbox que os exemplos criam e guardam em cache.
+# Ela não move dinheiro, mas credencial não vai para repositório público —
+# a regra não tem exceção "mas essa é de teste".
+.lunium-sandbox-key
+*.key
+.env
+.env.*
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store

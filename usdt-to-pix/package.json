@@ -1,0 +1,21 @@
+{
+  "name": "lunium-usdt-to-pix",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sell USDT (Polygon) and get paid to a PIX key — Lunium API, plain Node, zero dependencies.",
+  "license": "MIT",
+  "scripts": {
+    "start": "node sell.js",
+    "fail": "node sell.js --amount 10.02",
+    "expire": "node sell.js --expire",
+    "refuse": "node sell.js --brl 300000"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "sell.js",
+    "README.md",
+    "LICENSE"
+  ]
+}

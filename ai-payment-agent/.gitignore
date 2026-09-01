@@ -1,0 +1,4 @@
+# a sandbox credential the agent minted for itself; not a secret, but not source either
+.sandbox-key.json
+__pycache__/
+*.pyc

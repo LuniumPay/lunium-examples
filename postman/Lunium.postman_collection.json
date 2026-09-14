@@ -1,0 +1,159 @@
+{
+  "info": {
+    "_postman_id": "c4fe6a26-77de-4e11-ae88-9d742b97bf37",
+    "name": "Lunium API — PIX ↔ stablecoin",
+    "description": "Public, secret-free collection for the Lunium sandbox and production API. Start with 00 Health, create a sandbox key, then save the returned key only in your private environment. Never publish lun_test_ or lun_live_ values.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {"key": "key", "value": "X-API-Key", "type": "string"},
+      {"key": "value", "value": "{{api_key}}", "type": "string"},
+      {"key": "in", "value": "header", "type": "string"}
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('external_id')) {",
+          "  pm.environment.set('external_id', 'postman-' + Date.now());",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "00 — Health (no key)",
+      "request": {
+        "auth": {"type": "noauth"},
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {"raw": "{{base_url}}/ping", "host": ["{{base_url}}"], "path": ["ping"]},
+        "description": "Confirms API reachability. A 200 here does not prove a money rail is available; check the public status page and the operation response too."
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('API is reachable', () => pm.response.to.have.status(200));"]}}]
+    },
+    {
+      "name": "01 — Create sandbox key (no signup)",
+      "request": {
+        "auth": {"type": "noauth"},
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"},{"key":"Accept","value":"application/json"}],
+        "body": {"mode":"raw","raw":"{\n  \"name\": \"postman-sandbox\"\n}"},
+        "url": {"raw":"{{base_url}}/keys/sandbox","host":["{{base_url}}"],"path":["keys","sandbox"]},
+        "description": "Returns a lun_test_ key once. Copy it to api_key in your private environment. This collection intentionally does not save or print it automatically. Sandbox quota is per IP; reuse an existing key."
+      },
+      "event": [{"listen":"test","script":{"type":"text/javascript","exec":[
+        "pm.test('Sandbox key created or quota explained', () => pm.expect([201, 429]).to.include(pm.response.code));",
+        "if (pm.response.code === 201) {",
+        "  const body = pm.response.json();",
+        "  pm.test('Key is sandbox', () => pm.expect(body.sandbox).to.eql(true));",
+        "  pm.test('Key is returned once', () => pm.expect(body.api_key).to.match(/^lun_test_/));",
+        "}"
+      ]}}]
+    },
+    {
+      "name": "02 — Read this key and its live limits",
+      "request": {
+        "method":"GET",
+        "header":[{"key":"Accept","value":"application/json"}],
+        "url":{"raw":"{{base_url}}/keys/me","host":["{{base_url}}"],"path":["keys","me"]},
+        "description":"Read limits and capabilities from the key. Do not copy current numbers into source code."
+      },
+      "event":[{"listen":"test","script":{"type":"text/javascript","exec":[
+        "pm.test('Authenticated', () => pm.response.to.have.status(200));",
+        "pm.test('Limits are present', () => pm.expect(pm.response.json()).to.have.property('limits'));"
+      ]}}]
+    },
+    {
+      "name": "Cash-out — USDT/USDC to PIX",
+      "item": [
+        {
+          "name":"10 — Quote",
+          "request":{
+            "method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"Accept","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"asset\": \"usdt\",\n  \"network\": \"polygon\",\n  \"brl_amount\": \"10.00\",\n  \"pix_key\": \"demo@lunium.dev\",\n  \"pix_key_type\": \"email\",\n  \"external_id\": \"{{$guid}}\",\n  \"refund_address\": \"0x51e3d44172868acc60d68ca99591ce4230bc75e0\"\n}"},
+            "url":{"raw":"{{base_url}}/cash-outs","host":["{{base_url}}"],"path":["cash-outs"]},
+            "description":"Creates a quote. The demo PIX key and refund address are sandbox placeholders; replace both before production."
+          },
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":[
+            "pm.test('Quote created', () => pm.expect([200, 201]).to.include(pm.response.code));",
+            "if ([200, 201].includes(pm.response.code)) {",
+            "  const b = pm.response.json();",
+            "  const id = b.cashout_id || b.id;",
+            "  pm.test('cashout_id present', () => pm.expect(id).to.be.a('string'));",
+            "  if (id) pm.environment.set('cashout_id', id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name":"11 — Accept quote",
+          "request":{
+            "method":"POST","header":[{"key":"Accept","value":"application/json"}],
+            "url":{"raw":"{{base_url}}/cash-outs/{{cashout_id}}/accept","host":["{{base_url}}"],"path":["cash-outs","{{cashout_id}}","accept"]},
+            "description":"Locks the quote and returns deposit_address. If deposit_tag is present, it is mandatory. Never send real crypto to a sandbox address."
+          },
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":[
+            "pm.test('Quote accepted', () => pm.response.to.have.status(200));",
+            "pm.test('Deposit address present', () => pm.expect(pm.response.json()).to.have.property('deposit_address'));"
+          ]}}]
+        },
+        {
+          "name":"12 — Poll state",
+          "request":{
+            "method":"GET","header":[{"key":"Accept","value":"application/json"}],
+            "url":{"raw":"{{base_url}}/cash-outs/{{cashout_id}}","host":["{{base_url}}"],"path":["cash-outs","{{cashout_id}}"]},
+            "description":"Polling is the fallback. In production prefer webhooks, preserve the id, and do not translate a timeout into FAILED."
+          },
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":[
+            "pm.test('Order is readable', () => pm.response.to.have.status(200));",
+            "pm.test('State is explicit', () => pm.expect(pm.response.json()).to.have.property('state'));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name":"Cash-in — PIX to USDT/USDC",
+      "item":[
+        {
+          "name":"20 — Read cash-in catalog",
+          "request":{
+            "method":"GET","header":[{"key":"Accept","value":"application/json"}],
+            "url":{"raw":"{{base_url}}/cashin/catalog","host":["{{base_url}}"],"path":["cashin","catalog"]},
+            "description":"Read current asset/network pairs. Never hardcode the catalog."
+          },
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Catalog is available', () => pm.response.to.have.status(200));"]}}]
+        },
+        {
+          "name":"21 — Preview PIX to stablecoin",
+          "request":{
+            "method":"POST","header":[{"key":"Content-Type","value":"application/json"},{"key":"Accept","value":"application/json"}],
+            "body":{"mode":"raw","raw":"{\n  \"amount_cents\": 1000,\n  \"asset\": \"usdt\",\n  \"chain\": \"polygon\"\n}"},
+            "url":{"raw":"{{base_url}}/cashin/preview","host":["{{base_url}}"],"path":["cashin","preview"]},
+            "description":"Validates amount, asset and chain without creating a payable PIX. Production charge creation additionally requires payer_tax_number, payout_address or balance destination, and external_id."
+          },
+          "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Preview is explicit', () => pm.expect([200, 400, 403]).to.include(pm.response.code));"]}}]
+        }
+      ]
+    },
+    {
+      "name":"30 — Test configured webhook",
+      "request":{
+        "method":"POST","header":[{"key":"Accept","value":"application/json"}],
+        "url":{"raw":"{{base_url}}/webhooks/test","host":["{{base_url}}"],"path":["webhooks","test"]},
+        "description":"Sends a test event through the production transport to the HTTPS webhook configured on this key. No money moves. A 400 means no webhook is configured."
+      },
+      "event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('Webhook result is actionable', () => pm.expect([200, 400, 429, 502]).to.include(pm.response.code));"]}}]
+    }
+  ],
+  "variable": [
+    {"key":"base_url","value":"https://api.luniumpay.com","type":"string"},
+    {"key":"api_key","value":"","type":"string"},
+    {"key":"cashout_id","value":"","type":"string"}
+  ]
+}

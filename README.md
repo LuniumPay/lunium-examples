@@ -22,8 +22,14 @@ fixed. That is the bar: an example that does not run is worse than no example.
 | [`pix-verification`](./pix-verification) | "Someone says they paid. Prove it — without trusting them." | Node.js |
 | [`ai-payment-agent`](./ai-payment-agent) | "My agent got a sentence and has to pay. It only knows a domain." | Python |
 | [`treasury-agent`](./treasury-agent) | "My agent needs to move BRL programmatically, within limits." | Node.js |
+| [`postman`](./postman) | "I want to inspect and test the API before writing code." | Postman |
 
 No SDK. No framework. Standard library only — Node 18+ or Python 3. Clone and run.
+
+Prefer a request runner? Import the secret-free [Postman collection](./postman).
+It starts with health and sandbox provisioning, then covers live limits,
+cash-out, cash-in preview and webhook transport. Credentials stay in your own
+private environment and are never committed here.
 
 ---
 
@@ -35,10 +41,12 @@ curl -X POST https://api.luniumpay.com/keys/sandbox \
 ```
 
 That returns a `lun_test_…` key immediately. No signup, no sales call, no human.
-The sandbox runs the whole flow — quote, accept, poll, settle — without moving a
-cent, and it can produce the **bad** outcomes on purpose: the last two decimals of
-the amount pick the ending (`.01` delayed, `.02` failed, `.03` expired quote,
-`.04` refused by limit, `.05` slow). Every example here exercises at least one.
+For cash-out, the sandbox runs the whole flow — quote, accept, poll, settle —
+without moving a cent, and it can produce the **bad** outcomes on purpose: the
+last two decimals of the amount pick the ending (`.01` delayed, `.02` failed,
+`.03` expired quote, `.04` refused by limit, `.05` slow). Cash-in sandbox covers
+authentication, catalog, limits and preview; a payable PIX QR requires a
+production key. Every example here exercises at least one real branch.
 
 ---
 

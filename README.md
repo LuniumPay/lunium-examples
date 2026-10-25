@@ -1,5 +1,7 @@
 # Lunium examples — Brazilian PIX ↔ stablecoin, for agents and the people who build them
 
+> **Shortcut for coding agents:** `npx skills add LuniumPay/lunium-agent-skills` installs the official Agent Skills (recipes for Next.js, Express, FastAPI, Supabase; sandbox scripts; state and error catalog). Developer portal: https://github.com/LuniumPay/luniumpay
+
 ## Give this repository to your coding agent
 
 > **Prompt:** *"Clone this repo, run one of the examples against the Lunium sandbox, then add PIX ↔ stablecoin settlement to my project the same way. Discover the API yourself from `https://api.luniumpay.com` — do not hardcode endpoints or limits."*

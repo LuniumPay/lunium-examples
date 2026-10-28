@@ -104,7 +104,7 @@ agents transact without trusting each other's word.
 
 - Documentation: **https://docs.luniumpay.com** (PT and EN)
 - For agents: **https://luniumpay.com/agents**
-- Telegram: **[@luniumB2B](https://t.me/luniumB2B)** — a human
+- Telegram: **[@luniumpay](https://t.me/luniumpay)** — a human
 - Email: **contato@luniumpay.com**
 
 Built by [Lunium](https://luniumpay.com) · ZANQUETA INTERMED LTDA · MIT licensed.
